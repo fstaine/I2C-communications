@@ -67,22 +67,29 @@ void I2C_Init(void) {
 }
 
 uint32_t I2C_Receive(I2C_TypeDef *i2c, uint8_t address, uint8_t *data, uint32_t len) {
-	// printf("Starting reception...\r\n");
 	i2c->CR1 |=  I2C_CR1_START;
 	while(!(i2c->SR1 & I2C_SR1_SB))
 		;
-	// printf("While 1 terminé\r\n");
 	i2c->DR = address;
 	while(!(i2c->SR1 & I2C_SR1_ADDR))
 		;
-	if (i2c->SR2) {
-		while(!(i2c->SR1 & I2C_SR1_RXNE))
+	if (!i2c->SR2) {
+		return 0;
+	}
+	int nb_read = 0;
+	i2c->CR1 |=  I2C_CR1_ACK;
+	int i;
+	for (i=0;i<len-1;i++) {
+		while(!(i2c->SR1 & I2C_SR1_BTF))
 			;
 		*data++ = i2c->DR;
-		// printf("Yeah : %X\r\n", i2c->DR);
+		nb_read++;
 	}
-
-	// printf("Done\r\n");
+	// Last data
+	*data++ = i2c->DR;
+	nb_read++;
+	i2c->CR1 |= I2C_CR1_STOP;
+	return nb_read;
 }
 
 uint32_t I2C_Receive_IT(I2C_TypeDef *i2c, uint8_t address, uint8_t *data, uint32_t len) {

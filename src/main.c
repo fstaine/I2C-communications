@@ -52,8 +52,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define TEMP_ID         0x10111100
-#define MAGNETIC_ID     0b00111101 //0x3D
+#define TEMP_ID         0xBF
+#define MAGNETIC_ID     0b00111101 //0b00111101 //0x3D
 #define PRESSURE_ID     0b10111101
 #define ACCEMLERO_ID    0b01101000
 
@@ -70,15 +70,23 @@ static void Error_Handler(void);
 
 /* Private functions ---------------------------------------------------------*/
 
-#define N 2
+#define N 5
+
+void print_tab(uint8_t *tab, uint32_t size) {
+    int i;
+    printf("Result: ");
+    for(i=0;i<size;i++) {
+        printf("\t%d", tab[i]);
+    }
+    printf("\r\n");
+}
 
 /**
   * @brief  Main program
   * @param  None
   * @retval None
   */
-int main()
-{
+int main() {
     /* configure clocks to use the external Xtal with frequ = 84000000 Hz*/
     set_clk();
 	NVIC_SetPriority(USART2_IRQn,5);
@@ -90,8 +98,8 @@ int main()
     printf("Init over !\r\n");
     for(;;) {
         I2C_Receive(I2C1, MAGNETIC_ID, data, N);
-		printf("Result: %d-%d\r\n", data[0], data[1]);
-        // wait_ms(100);
+        print_tab(data, N);
+        wait_ms(500);
     }
     return 1;
 }
