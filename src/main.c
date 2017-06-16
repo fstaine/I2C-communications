@@ -52,15 +52,43 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define TEMP_ID         0xBF
-#define MAGNETIC_ID     0b00111101 //0b00111101 //0x3D
-#define PRESSURE_ID     0b10111101
-#define ACCEMLERO_ID    0b01101000
+#define WHO_AM_I                    0x0F
+
+/* ---------------------------------- Temperature --------------------------- */
+#define TEMP_ADDR_WRITE             0xBE
+#define TEMP_ADDR_READ              0xBF
+
+#define TEMP_WHO_AM_I               0x0F
+#define TEMP_OUT_L                  0x2A
+#define TEMP_OUT_H                  0x2B
+#define TEMP_T0_OUT_L               0x3C
+#define TEMP_T0_OUT_H               0x3D
+#define TEMP_T1_OUT_L               0x3E
+#define TEMP_T1_OUT_H               0x3F
+
+/* ---------------------------------- Temperature --------------------------- */
+#define MAGNETO_ADDR_WRITE		    0x3D
+#define MAGNETO_ADDR_READ           0x3C
+
+#define MAGNETO_WHO_AM_I            0x0F
+
+/* ---------------------------------- Pressure ------------------------------ */
+#define PRESSURE_ADDR_WRITE         0xBA
+#define PRESSURE_ADDR_READ		    0xBB
+
+#define PRESSURE_WHO_AM_I		    0x0F
+#define PRESSURE_PRESS_OUT_XL       0x28
+#define PRESSURE_PRESS_OUT_L        0x29
+#define PRESSURE_PRESS_OUT_H        0x2A
+
+/* ---------------------------------- Accelerometer ------------------------- */
+#define ACCELEROMETER_ADDR_WRITE	0xD6
+#define ACCELEROMETER_ADDR_READ		0xD7
+
+#define ACCELEROMETER_WHO_AM_I		0x0F
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-
-uint16_t temp, hum;
 
 /* Private function prototypes -----------------------------------------------*/
 static void wait_us(uint32_t us);
@@ -70,13 +98,13 @@ static void Error_Handler(void);
 
 /* Private functions ---------------------------------------------------------*/
 
-#define N 5
+#define N 3
 
 void print_tab(uint8_t *tab, uint32_t size) {
     int i;
     printf("Result: ");
     for(i=0;i<size;i++) {
-        printf("\t%d", tab[i]);
+        printf("\t%X", tab[i]);
     }
     printf("\r\n");
 }
@@ -97,7 +125,7 @@ int main() {
 	/* main application */
     printf("Init over !\r\n");
     for(;;) {
-        I2C_Receive(I2C1, MAGNETIC_ID, data, N);
+        I2C_Receive(I2C1, ACCELEROMETER_ADDR_READ, ACCELEROMETER_ADDR_WRITE, WHO_AM_I, data, N);
         print_tab(data, N);
         wait_ms(500);
     }
@@ -128,109 +156,5 @@ static void wait_ms(uint32_t ms){
 #endif
 	while(ms--);
 }
-
-// #if USE_HAL_DRIVER
-//
-// /**
-//   * @brief  System Clock Configuration
-//   *         The system Clock is configured as follow :
-//   *            System Clock source            = PLL (HSI)
-//   *            SYSCLK(Hz)                     = 84000000
-//   *            HCLK(Hz)                       = 84000000
-//   *            AHB Prescaler                  = 1
-//   *            APB1 Prescaler                 = 2
-//   *            APB2 Prescaler                 = 1
-//   *            HSI Frequency(Hz)              = 16000000
-//   *            PLL_M                          = 16
-//   *            PLL_N                          = 336
-//   *            PLL_P                          = 4
-//   *            PLL_Q                          = 7
-//   *            VDD(V)                         = 3.3
-//   *            Main regulator output voltage  = Scale2 mode
-//   *            Flash Latency(WS)              = 2
-//   * @param  None
-//   * @retval None
-//   */
-// static void SystemClock_Config(void)
-// {
-//   RCC_ClkInitTypeDef RCC_ClkInitStruct;
-//   RCC_OscInitTypeDef RCC_OscInitStruct;
-//
-//   /* Enable Power Control clock */
-//   __HAL_RCC_PWR_CLK_ENABLE();
-//
-//   /* The voltage scaling allows optimizing the power consumption when the device is
-//      clocked below the maximum system frequency, to update the voltage scaling value
-//      regarding system frequency refer to product datasheet.  */
-//   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
-//
-//   /* Enable HSI Oscillator and activate PLL with HSI as source */
-//   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-//   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-//   RCC_OscInitStruct.HSICalibrationValue = 0x10;
-//   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-//   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-//   RCC_OscInitStruct.PLL.PLLM = 16;
-//   RCC_OscInitStruct.PLL.PLLN = 336;
-//   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-//   RCC_OscInitStruct.PLL.PLLQ = 7;
-//   if(HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-//   {
-//     Error_Handler();
-//   }
-//
-//   /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
-//      clocks dividers */
-//   RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-//   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-//   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-//   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-//   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-//   if(HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-//   {
-//     Error_Handler();
-//   }
-// }
-//
-// /**
-//   * @brief  This function is executed in case of error occurrence.
-//   * @param  None
-//   * @retval None
-//   */
-// static void Error_Handler(void)
-// {
-//   /* User may add here some code to deal with this error */
-//   while(1)
-//   {
-//   }
-// }
-//
-// #ifdef  USE_FULL_ASSERT
-// /**
-//   * @brief  Reports the name of the source file and the source line number
-//   *         where the assert_param error has occurred.
-//   * @param  file: pointer to the source file name
-//   * @param  line: assert_param error line source number
-//   * @retval None
-//   */
-// void assert_failed(uint8_t* file, uint32_t line)
-// {
-//   /* User can add his own implementation to report the file name and line number,
-//      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-//
-//   /* Infinite loop */
-//   while (1)
-//   {
-//   }
-// }
-// #endif
-// #endif /* USE_HAL_DRIVER */
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -1,6 +1,6 @@
 
-#include "i2c.h"
 #include <stdio.h>
+#include "i2c.h"
 
 I2C_Device i2c1 = {
 	.instance = I2C1,
@@ -9,19 +9,6 @@ I2C_Device i2c1 = {
 
 int i = 0;
 uint8_t data[10] = {};
-
-/*
-(p467)
-The following is the required sequence in master mode.
-    • Program the peripheral input clock in I2C_CR2 Register in order to generate correct timings
-    • Configure the clock control registers
-    • Configure the rise time register
-    • Program the I2C_CR1 register to enable the peripheral
-    • Set the START bit in the I2C_CR1 register to generate a Start condition
-    The peripheral input clock frequency must be at least:
-        • 2 MHz in Sm mode
-        • 4 MHz in Fm mode
-*/
 
 #define I2C_FREQ                42
 #define I2C_SPEED               210
@@ -66,46 +53,29 @@ void I2C_Init(void) {
     i2c->CR1 |=  I2C_CR1_PE;                 // Peripheral enable
 }
 
-uint32_t I2C_Receive(I2C_TypeDef *i2c, uint8_t address, uint8_t *data, uint32_t len) {
+uint32_t I2C_Receive(I2C_TypeDef *i2c, uint8_t read_addr, uint8_t write_addr,
+		uint8_t register_addr, uint8_t *data, uint32_t len) {
 	i2c->CR1 |=  I2C_CR1_START;
-	while(!(i2c->SR1 & I2C_SR1_SB))
-		;
-	i2c->DR = address;
-	while(!(i2c->SR1 & I2C_SR1_ADDR))
-		;
+	while(!(i2c->SR1 & I2C_SR1_SB));
+	i2c->DR = write_addr;
+	while(!(i2c->SR1 & I2C_SR1_ADDR));
 	if (!i2c->SR2) {
 		return 0;
 	}
-	int nb_read = 0;
-	i2c->CR1 |=  I2C_CR1_ACK;
-	int i;
-	for (i=0;i<len-1;i++) {
-		while(!(i2c->SR1 & I2C_SR1_BTF))
-			;
-		*data++ = i2c->DR;
-		nb_read++;
+	i2c->DR = register_addr;
+
+	i2c->CR1 |= I2C_CR1_START;
+	while(!(i2c->SR1 & I2C_SR1_SB));
+	i2c->DR = read_addr;
+	while(!(i2c->SR1 & I2C_SR1_ADDR));
+	i2c->CR1 &= ~I2C_CR1_ACK;
+	i2c->CR1 |=  I2C_CR1_POS;
+	if (!i2c->SR2) {
+		return 0;
 	}
-	// Last data
-	*data++ = i2c->DR;
-	nb_read++;
+	while(!(i2c->SR1 & I2C_SR1_BTF));
 	i2c->CR1 |= I2C_CR1_STOP;
-	return nb_read;
-}
-
-uint32_t I2C_Receive_IT(I2C_TypeDef *i2c, uint8_t address, uint8_t *data, uint32_t len) {
-	i2c1.pRxBuffer = data;
-	i2c1.Rxsize = len;
-	i2c1.RxCount = 0;
-
-	i2c->CR2 |=  I2C_CR2_ITBUFEN;
-	NVIC_EnableIRQ(I2C1_EV_IRQn);
-	i2c->CR1 |=  I2C_CR1_START;
-}
-
-void I2C_EV_IRQHandler() {
-	I2C_TypeDef *i2c = i2c1.instance;
-	if (i2c->SR1 & I2C_SR1_RXNE) {
-		*i2c1.pRxBuffer++ = i2c->DR;
-		i2c1.RxCount++;
-	}
+	*data++ = i2c->DR;
+	*data++ = i2c->DR;
+	return 2;
 }

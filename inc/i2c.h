@@ -21,9 +21,7 @@ typedef struct {
 /* prototype */
 void I2C_Init(void);
 uint32_t I2C_Transmit(I2C_Device * i2c, uint8_t * data, uint32_t len);
-uint32_t I2C_Receive(I2C_TypeDef *i2c, uint8_t address, uint8_t *data, uint32_t len);
-uint32_t I2C_Receive_IT(I2C_TypeDef *i2c, uint8_t address, uint8_t *data, uint32_t len);
-void I2C_TX_complete_callback(void);
-uint32_t I2C_Transmit_IT(I2C_Device * i2c, uint8_t * data, uint32_t len);
+uint32_t I2C_Receive(I2C_TypeDef *i2c, uint8_t read_addr, uint8_t write_addr,
+		uint8_t register_addr, uint8_t *data, uint32_t len);
 
 #endif /* __I2C_H */
