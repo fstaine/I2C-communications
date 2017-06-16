@@ -32,3 +32,19 @@
 
 # Debug files
 *.dSYM/
+
+src/system_stm32f4xx\.c
+
+src/syscalls\.c
+
+src/stm32f4xx_it\.c
+
+startup/startup_stm32f401xe\.s
+
+startup/STM32F401CE_FLASH\.ld
+
+startup/STM32F401CE_RAM\.ld
+
+src/set_clk\.c
+
+inc/stm32f4xx_it\.h
